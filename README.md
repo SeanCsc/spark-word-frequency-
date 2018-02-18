@@ -6,65 +6,83 @@ Spark入门项目
 输入：多个文件
 输出：出现频次最高的100个单词，输出文件中每个单词一行
 
-In this Kaggle competition. I firstly preprocess data (concate the training and test datasets), including remove outliers, filling up missing values based on the meaning and transfer those non-int variables to categorical variables. For the models, I ensemble advanced tree models and linear models to get the result.
 
-## Data Preprocessing and Exploration
+## Spark编程模型
+开发的应用程序都是由driver programe构成，该驱动程序通过跑main函数来执行各种并行操作。
+并行计算访问的元素集合：RDD（弹性分布式数据集）。操作包括转换（比如map）和动作（比如reduce)
 
-For the data preprocessing and exploration
+## 编程语言及库函数
+本次项目基于Python实现，利用pyspark库并行实现。
+'''python
+from pyspark import SparkContext,SparkConf
+from operator import add
+'''
 
-  1. Load the csv files
-  2. Fill in the missing values. Most of the missing value of features are because of lack of that feature, such as fence, I filled them with None. For some numerical feature, I fill them with the mean value of the neighbors or 0.
-  3. For non-numerical features, use get_dummies to transform them to 0/1 value.
-  
-## Feature Engineering
-  1. Feature importance. Use Lasso to measure the importance of feature and drop the feature with 0 variance.
-  2. Add related features like total square
-  3. Standarization and Normalization
-  
-## Model Selection
+## 开发流程：
+####首先创建SparkConf对象，包括一系列应用信息（应用程序名，主节点URL等）->创建SparkContext(让Spark知道如何连接Spark集群）
+'''python
+appName = "WordCount"
+conf = SparkConf().setAppName(appName).setMaster("local")
+sc = SparkContext(conf=conf)
+'''
+####创建RDD
+本项目中通过sc.textFile()创建RDD
+(创建RDD可以从文件系统或者HDFS中的文件中创建，也可以从Python的集合中创建）
+'''python
+inputRDD = sc.textFile(inputFiles)
+stopRDD = sc.textFile(stopWordFile)
+'''
+####预处理
+-排除非单词干扰。因为该项目要求为统计单词的个数，因此先将标点符号等干扰去除。因此使用空格替换这些标点符号，同时将替换后的行拆分成单词。
+'''python
+targetList = list('\t\().,?[]!;|') + ['--']
+def replaceAndSplit(s):
+    for c in targetList:
+        s = s.replace(c, " ")
+    return s.split()
+inputRDDv1 = inputRDD.flatMap(replaceAndSplit)
+'''
+-处理停词表
+去除空行并获得单词表
+'''python
+stopList = stopRDD.map(lambda x: x.strip()).collect()
+'''
+-去除文件中的停词
+'''python
+inputRDDv2 = inputRDDv1.filter(lambda x: x not in stopList)
 
-Because this is a regression problem. So I decided to use linear model, like ridge and lasso regression, elastic-net. Besides, I use Tree model like XGBT. 
+####Map
+将每个单词map到一个元组(word,1)
+'''python
+map(lambda x:(x,1))
+'''
+####Reduce
+根据上一步中的元组，按照单词（key)将value相加。
+'''python
+reduceByKey(operation)
+saveAsTextFile('/tmp/v4output')
+'''
+####TopK
+-交换key/value位置
+-排序
+-提取所有单词（去掉频次信息）
+-获取100
+'''python
+inputRDDv5 = inputRDDv4.map(lambda x: (x[1], x[0]))
+inputRDDv6 = inputRDDv5.sortByKey(ascending=False)
+inputRDDv7 = inputRDDv6.map(lambda x: (x[1], x[0])).keys()
+top100 = inputRDDv7.take(100)
 
-## Model Evaluation
-I use 5-fold to do cross-validation and negative MSE as the measurement of the performance for model.
+####存储
+'''python
+outputFile = "/tmp/result"
+result = sc.parallelize(top100)
+result.saveAsTextFile(outputFile)
+'''
+####执行文件
+spark submit
 
-## Model Training
-For the linear model, I use cross-validation to choose the best parameter among 5 candidates. For tree models, I use grid search twice to determine the max depth, number of trees. 
 
 
-## Ensemble Generation
 
-Ensemble Learning refers to the technique of combining different models. It reduces both bias and variance of the final model, thus increasing the score and reducing the risk of overfitting. I mainly use the idea of stack, which is use the output of basic models as the input for the final model. In terms of basic models, I choose to average the models elastic net, GBoost and kernel-ridge. For the meta model, I use the linear model lasso.
-[stack in practice](http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/)
 
-## Results
-
-My submission is currently ranked in the Top 10% on Kaggle and this can certainly be improved.
-
-## Tools Utilized
-
-####Stack:
-
-* python
-
-####Modeling:
-
-* numpy
-* scipy
-* pandas
-* scikit-learn
-* xgboost
-* model-selection
-
-####Statistics observation:
-
-* matplotlib
-* seaborn
-
-## Update
-
-v1.2 Skewness analysis
-For linear regression model, it assumes that the residual satisfies the normal distribution. Therefore, skewness should be avoided. Besides, for price data, it is more sensable to use log. 
-[deal with skewness](https://becominghuman.ai/how-to-deal-with-skewed-dataset-in-machine-learning-afd2928011cc)
-
-v1.3 For XGBT model parameter tuning, set the default parameters and use ROC-AUC to firstly have a sense about overfitting or underfitting. Then change related parameters.

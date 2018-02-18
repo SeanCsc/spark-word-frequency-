@@ -89,6 +89,9 @@ result.saveAsTextFile(outputFile)
 #### 执行文件
 spark submit
 
+#### 结果示例
+![result](https://github.com/SeanCsc/spark-word-frequency-/blob/master/other/out.jpg)
+
 
 
 

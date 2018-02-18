@@ -3,12 +3,15 @@ Spark入门项目
 
 ## 项目描述
 在给定的莎士比亚文集上，根据停词表，统计出现频率最高的100个词
+
 输入：多个文件
+
 输出：出现频次最高的100个单词，输出文件中每个单词一行
 
 
 ## Spark编程模型
 开发的应用程序都是由driver programe构成，该驱动程序通过跑main函数来执行各种并行操作。
+
 并行计算访问的元素集合：RDD（弹性分布式数据集）。操作包括转换（比如map）和动作（比如reduce)
 
 ## 编程语言及库函数
@@ -64,9 +67,13 @@ saveAsTextFile('/tmp/v4output')
 ```
 #### TopK
 -交换key/value位置
+
 -排序
+
 -提取所有单词（去掉频次信息）
+
 -获取100
+
 ```python
 inputRDDv5 = inputRDDv4.map(lambda x: (x[1], x[0]))
 inputRDDv6 = inputRDDv5.sortByKey(ascending=False)

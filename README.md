@@ -15,7 +15,7 @@ Spark入门项目
 并行计算访问的元素集合：RDD（弹性分布式数据集）。操作包括转换（比如map）和动作（比如reduce)
 
 ## 编程语言及库函数
-本次项目基于Python实现，利用pyspark库并行实现。
+本次项目基于Linux下的pyspark实现。
 ```python
 from pyspark import SparkContext,SparkConf
 from operator import add

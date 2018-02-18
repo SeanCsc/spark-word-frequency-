@@ -5,10 +5,10 @@ appName = "WordCount"
 conf = SparkConf().setAppName(appName).setMaster("local")
 sc = SparkContext(conf= conf)
 
-inputFiles = "/home/shiyanlou/wordcount/shakespear/*"
-stopWordFile = "/home/shiyanlou/wordcount/stopword.txt"
+inputFiles = "/home/shiyanlou/shakespear/*"
+stopWordFile = "/home/shiyanlou/stopword.txt"
 
-outputFile = "/tmp/result"
+outputFile = "/Code/result"
 
 targetList = list('\t\().,?[]!;|')+['--']
 
@@ -26,7 +26,7 @@ inputRDDv1 = inputRDD.flatMap(replaceAndSplit)
 inputRDDv2 = inputRDDv1.filter(lambda x: x not in stopList)
 inputRDDv3 = inputRDDv2.map(lambda x: (x,1))
 inputRDDv4 = inputRDDv3.reduceByKey(add)
-inputRDDv5 = inputRDDv4.mao(lambda x:(x[1],x[0]))
+inputRDDv5 = inputRDDv4.map(lambda x:(x[1],x[0]))
 inputRDDv6 = inputRDDv5.sortByKey(ascending = False)
 inputRDDv7 = inputRDDv6.map(lambda x:(x[1],x[0])).keys()
 top100 = inputRDDv7.take(100)
